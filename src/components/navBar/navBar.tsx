@@ -1,18 +1,26 @@
 import { NavLink } from "react-router-dom";
+import { useState } from "react";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem
+  DropdownMenuItem,
 } from "../ui/dropdown-menu";
 
 function NavBar() {
+  const [open, setOpen] = useState(false);
+
   return (
     <div style={{ position: "absolute", top: 32, left: 32 }}>
-      <DropdownMenu>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="Open menu">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Open menu"
+            onClick={() => setOpen((v) => !v)}
+          >
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ height: 3, width: 32, background: "#333", borderRadius: 2 }}></span>
               <span style={{ height: 3, width: 32, background: "#333", borderRadius: 2 }}></span>
@@ -31,7 +39,9 @@ function NavBar() {
               <span style={{ flex: 1 }}>Language</span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" style={{ marginLeft: 8 }}>▼</Button>
+                  <Button variant="ghost" size="sm" style={{ marginLeft: 8 }} onClick={(e) => { e.stopPropagation(); }}>
+                    ▼
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent sideOffset={8} style={{ minWidth: 120, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", borderRadius: 8, padding: 4 }}>
                   <DropdownMenuItem>French</DropdownMenuItem>
