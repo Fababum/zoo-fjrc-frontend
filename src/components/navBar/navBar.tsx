@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom"
+import { Menu } from "lucide-react"
 
 import {
   DropdownMenu,
@@ -21,12 +22,10 @@ function NavBar() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 p-2 rounded-md border border-gray-100 bg-white/90 shadow-sm"
+            className="h-10 w-10 rounded-md border border-gray-100 bg-white/90 shadow-sm"
             aria-label="Open menu"
           >
-            <span className="block h-0.5 w-5 rounded bg-gray-700" />
-            <span className="block h-0.5 w-5 rounded bg-gray-700" />
-            <span className="block h-0.5 w-5 rounded bg-gray-700" />
+            <Menu className="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>
 
