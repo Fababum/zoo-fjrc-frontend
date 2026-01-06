@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 
 import { TranslationsContext } from "../TranslationsContext";
 
-import "./signeIn.css"
+import "./signin.css"
 import { useContext } from "react";
 
 function SignIn() {
