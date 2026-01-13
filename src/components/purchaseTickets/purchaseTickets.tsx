@@ -37,6 +37,12 @@ function TicketBuyPage() {
       return [...cur, { title, price, qty: quantity }];
     });
     setShowQtyModal(false);
+    // open the cart so the user sees the updated contents
+    setShowCart(true);
+  };
+
+  const handleRemoveFromCart = (title: string) => {
+    setCart((cur) => cur.filter((c) => c.title !== title));
   };
 
   const cartCount = cart.reduce((s, c) => s + c.qty, 0);
@@ -102,9 +108,12 @@ function TicketBuyPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {cart.map((c) => (
-                  <div key={c.title} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>{c.title} x {c.qty}</div>
-                    <div>CHF { (c.price * c.qty).toFixed(2) }</div>
+                  <div key={c.title} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                    <div>{c.title} × {c.qty}</div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <div>CHF { (c.price * c.qty).toFixed(2) }</div>
+                      <button onClick={() => handleRemoveFromCart(c.title)} style={smallButton}>Entfernen</button>
+                    </div>
                   </div>
                 ))}
                 <div style={{ borderTop: '1px solid #eee', paddingTop: 8, display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
@@ -289,5 +298,13 @@ const cartPane: React.CSSProperties = {
   marginTop: 8,
 };
 
-export default TicketBuyPage;
+const smallButton: React.CSSProperties = {
+  padding: '6px 8px',
+  borderRadius: 6,
+  border: 'none',
+  background: '#eee',
+  cursor: 'pointer',
+  fontSize: 12,
+};
 
+export default TicketBuyPage;
