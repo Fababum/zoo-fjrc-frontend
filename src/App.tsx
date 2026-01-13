@@ -4,13 +4,14 @@ import SignUp from "./components/signeUp/signeUp";
 import SignUpConfirmation from "./components/signUpConfirmation/signUpConfirmation";
 import Articles from "./components/articles/articles";
 import { Routes, Route } from "react-router-dom";
+import Home from "./components/homepage/homepage"
 
 function App() {
   return (
     <>
       <NavBar />
        <Routes>
-            <Route path="/" element={<h1>Home</h1>} />
+            <Route path="/" element={<Home/>} />
             <Route path="/signIn" element={<SignIn />} />
             <Route path="/articles/:article" element={<Articles />} />
             <Route path="/signUp" element={<SignUp />} />
