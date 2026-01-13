@@ -3,14 +3,14 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "../ui/button";
 import LoadArticle from "./loadArticle";
 import { useState, useEffect } from "react";
-import { getAllArtikel, type Artikel } from "../../api/artikel";
+import { getAllArtikel, createArtikel } from "../../api/artikel";
+import { Plus, X } from "lucide-react";
 
 interface Article {
   id: string;
   title: string;
   description: string;
   image: string;
-  emoji: string;
   markdownText?: string;
 }
 
@@ -19,6 +19,9 @@ function ArticleOverview() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [markdownInput, setMarkdownInput] = useState('');
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -34,7 +37,6 @@ function ArticleOverview() {
             title: extractTitle(artikel.markdownText),
             description: extractDescription(artikel.markdownText),
             image: extractImage(artikel.markdownText),
-            emoji: extractEmoji(artikel.markdownText),
             markdownText: artikel.markdownText,
           }));
         
@@ -59,24 +61,75 @@ function ArticleOverview() {
   };
 
   const extractDescription = (markdown: string): string => {
-    const lines = markdown.split('\n');
-    const descLine = lines.find(line => line.trim() && !line.startsWith('#'));
-    return descLine ? descLine.substring(0, 150) : '';
+    const lines = markdown.split('\n').filter(line => line.trim());
+    // Find first paragraph after title (skip title and images)
+    for (const line of lines) {
+      if (!line.startsWith('#') && !line.startsWith('![') && line.length > 20) {
+        return line.substring(0, 200) + (line.length > 200 ? '...' : '');
+      }
+    }
+    return '';
   };
 
   const extractImage = (markdown: string): string => {
     const imageMatch = markdown.match(/!\[.*?\]\((.+?)\)/);
-    return imageMatch ? imageMatch[1] : '/placeholder.png';
+    if (imageMatch) {
+      return imageMatch[1];
+    }
+    // Return random image as fallback
+    return getRandomImage();
   };
 
-  const extractEmoji = (markdown: string): string => {
-    const emojiMatch = markdown.match(/([\u{1F300}-\u{1F9FF}])/u);
-    return emojiMatch ? emojiMatch[1] : '📄';
+  const getRandomImage = (): string => {
+    const images = [
+      '/Elephant.png',
+      '/ElephantSquare.png',
+      '/Fuchs.png',
+      '/leu.png',
+      '/Serengeti_Elefantenherde1.png'
+    ];
+    return images[Math.floor(Math.random() * images.length)];
   };
+
+
 
   const handleArticleClick = (articleId: string) => {
     const currentLang = window.location.pathname.split('/')[1];
     navigate(`/${currentLang}/articles/${articleId}`);
+  };
+
+  const handleCreateArticle = async () => {
+    if (!markdownInput.trim()) return;
+
+    try {
+      setCreating(true);
+      
+      await createArtikel({
+        markdownText: markdownInput,
+        userId: 1
+      });
+
+      // Refresh articles list
+      const data = await getAllArtikel();
+      const transformedArticles = data
+        .filter(artikel => artikel.isActive)
+        .map((artikel) => ({
+          id: artikel.id.toString(),
+          title: extractTitle(artikel.markdownText),
+          description: extractDescription(artikel.markdownText),
+          image: extractImage(artikel.markdownText),
+          markdownText: artikel.markdownText,
+        }));
+      
+      setArticles(transformedArticles);
+      setShowCreateModal(false);
+      setMarkdownInput('');
+    } catch (err) {
+      console.error('Error creating article:', err);
+      setError('Fehler beim Erstellen des Artikels.');
+    } finally {
+      setCreating(false);
+    }
   };
 
   if (loading) {
@@ -94,9 +147,19 @@ function ArticleOverview() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            Tier-Artikel
-          </h1>
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <h1 className="text-4xl font-bold text-slate-900 dark:text-white">
+              Tier-Artikel
+            </h1>
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="gap-2"
+              size="lg"
+            >
+              <Plus className="h-5 w-5" />
+              Neuer Artikel
+            </Button>
+          </div>
           <p className="text-lg text-slate-600 dark:text-slate-300">
             Entdecke faszinierende Geschichten und Fakten über verschiedene Tierarten
           </p>
@@ -124,9 +187,7 @@ function ArticleOverview() {
                     target.style.display = "none";
                   }}
                 />
-                <div className="absolute top-4 right-4 text-5xl">
-                  {article.emoji}
-                </div>
+
               </div>
 
               <CardHeader>
@@ -157,6 +218,52 @@ function ArticleOverview() {
           ))}
         </div>
       </div>
+
+      {/* Create Article Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Neuer Artikel</h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Markdown-Text
+                </label>
+                <textarea
+                  value={markdownInput}
+                  onChange={(e) => setMarkdownInput(e.target.value)}
+                  placeholder="Artikel-Text hier eingeben..."
+                  className="w-full h-64 p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-500 font-mono text-sm"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreateModal(false)}
+                >
+                  Abbrechen
+                </Button>
+                <Button
+                  onClick={handleCreateArticle}
+                  disabled={creating || !markdownInput.trim()}
+                >
+                  {creating ? 'Erstelle...' : 'Artikel erstellen'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

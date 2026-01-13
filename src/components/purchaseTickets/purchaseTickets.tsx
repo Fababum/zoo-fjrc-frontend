@@ -1,6 +1,8 @@
-﻿import React, { useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthContext";
+
+const CART_STORAGE_KEY = "zoo.cart";
 
 function TicketBuyPage() {
   const auth = useAuth();
@@ -8,7 +10,23 @@ function TicketBuyPage() {
   const [showQtyModal, setShowQtyModal] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
-  const [cart, setCart] = useState<Array<{ title: string; price: number; qty: number }>>(() => []);
+  const [cart, setCart] = useState<Array<{ title: string; price: number; qty: number }>>(() => {
+    try {
+      const raw = localStorage.getItem(CART_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(
+        (item) =>
+          item &&
+          typeof item.title === "string" &&
+          typeof item.price === "number" &&
+          typeof item.qty === "number"
+      );
+    } catch {
+      return [];
+    }
+  });
   const [showCart, setShowCart] = useState(false);
   const [showLoginNeeded, setShowLoginNeeded] = useState(false);
 
@@ -41,6 +59,14 @@ function TicketBuyPage() {
 
   const cartCount = cart.reduce((s, c) => s + c.qty, 0);
   const cartTotal = cart.reduce((s, c) => s + c.qty * c.price, 0);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    } catch {
+      // ignore storage errors (private mode/quota)
+    }
+  }, [cart]);
 
   return (
     <div style={pageStyle}>
@@ -211,12 +237,6 @@ const headerCard: React.CSSProperties = {
   fontWeight: 700,
 };
 
-const listDetail: React.CSSProperties = {
-  padding: "20px",
-  display: "flex",
-  flexDirection: "column",
-};
-
 const ticketCard: React.CSSProperties = {
   backgroundColor: "#ebebebff",
   padding: "15px",
@@ -301,4 +321,5 @@ const cartPane: React.CSSProperties = {
 };
 
 export default TicketBuyPage;
+
 
