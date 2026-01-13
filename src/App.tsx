@@ -11,6 +11,7 @@ import { useContext, useEffect } from "react";
 import { TranslationsContext } from "./components/TranslationsContext";
 import FloatingTicket from "./components/floatingTicket/floatingTicket";
 import TicketBuyPage from "./components/purchaseTickets/purchaseTickets";
+import PurchaseTicketsCardInfo from "./components/purchaseTicketsCardInfo/purchaseTicketsCardInfo";
 
 function LanguageWrapper({ children }: { children: React.ReactNode }) {
   const { lang } = useParams<{ lang: string }>();
@@ -31,6 +32,15 @@ function App() {
       <NavBar />
       <FloatingTicket />
        <Routes>
+            <Route path="/" element={<h1>Home</h1>} />
+            <Route path="/map" element={<MapPage />} />
+            <Route path="/signIn" element={<SignIn />} />
+            <Route path="/articles/:article" element={<Articles />} />
+            <Route path="/signUp" element={<SignUp />} />
+            <Route path="/signUpConfirmation" element={<SignUpConfirmation />} />
+            <Route path="/articles" element={<Articles />} />
+            <Route path="/purchaseTickets" element={<TicketBuyPage />} />
+            <Route path="/purchase-card" element={<PurchaseTicketsCardInfo />} />
             <Route path="/" element={<Navigate to="/de" replace />} />
             <Route path="/:lang" element={<LanguageWrapper><h1>Home</h1></LanguageWrapper>} />
             <Route path="/:lang/map" element={<LanguageWrapper><MapPage /></LanguageWrapper>} />
