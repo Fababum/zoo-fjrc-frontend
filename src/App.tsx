@@ -1,4 +1,3 @@
-
 import NavBar from "./components/navBar/navBar";
 import NotFound from "./components/errorpage/errorpage";
 import SignIn from "./components/signIn/signIn";
@@ -10,6 +9,8 @@ import Articles from "./components/articles/articles";
 import Chatbot from "./components/chatbot/Chatbot";
 import { useContext, useEffect } from "react";
 import { TranslationsContext } from "./components/TranslationsContext";
+import FloatingTicket from "./components/floatingTicket/floatingTicket";
+import TicketBuyPage from "./components/purchaseTickets/purchaseTickets";
 
 function LanguageWrapper({ children }: { children: React.ReactNode }) {
   const { lang } = useParams<{ lang: string }>();
@@ -28,6 +29,7 @@ function App() {
   return (
     <>
       <NavBar />
+      <FloatingTicket />
        <Routes>
             <Route path="/" element={<Navigate to="/de" replace />} />
             <Route path="/:lang" element={<LanguageWrapper><h1>Home</h1></LanguageWrapper>} />
@@ -38,6 +40,7 @@ function App() {
             <Route path="/:lang/signUp" element={<LanguageWrapper><SignUp /></LanguageWrapper>} />
             <Route path="/:lang/signUpConfirmation" element={<LanguageWrapper><SignUpConfirmation /></LanguageWrapper>} />
             <Route path="/:lang/chatbot" element={<LanguageWrapper><Chatbot /></LanguageWrapper>} />
+            <Route path="/:lang/purchaseTickets" element={<LanguageWrapper><TicketBuyPage /></LanguageWrapper>} />
             <Route path="*" element={<NotFound />} />
        </Routes>
     </>
