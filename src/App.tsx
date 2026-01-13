@@ -6,6 +6,10 @@ import SignUpConfirmation from "./components/signUpConfirmation/signUpConfirmati
 import { Routes, Route, useParams, Navigate } from "react-router-dom";
 import MapPage from "./components/map/map";
 import Articles from "./components/articles/articles";
+
+import { Routes, Route } from "react-router-dom";
+import Home from "./components/homepage/homepage"
+
 import Chatbot from "./components/chatbot/Chatbot";
 import { useContext, useEffect } from "react";
 import { TranslationsContext } from "./components/TranslationsContext";
@@ -26,13 +30,14 @@ function LanguageWrapper({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+
 function App() {
   return (
     <>
       <NavBar />
       <FloatingTicket />
        <Routes>
-            <Route path="/" element={<h1>Home</h1>} />
+            <Route path="/" element={<Home/>} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/signIn" element={<SignIn />} />
             <Route path="/articles/:article" element={<Articles />} />
