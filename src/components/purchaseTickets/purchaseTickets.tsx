@@ -6,10 +6,13 @@ function TicketBuyPage() {
   const auth = useAuth();
   const navigate = useNavigate();
   const [loadingTicket, setLoadingTicket] = useState<string | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingTicket, setPendingTicket] = useState<string | null>(null);
 
   const handleBuy = async (ticketTitle: string) => {
     if (!auth.isLoggedIn) {
-      navigate("/signIn");
+      setPendingTicket(ticketTitle);
+      setShowLoginModal(true);
       return;
     }
 
@@ -68,6 +71,33 @@ function TicketBuyPage() {
           </div>
         ))}
       </div>
+
+      {showLoginModal && (
+        <div style={modalOverlay} onClick={() => setShowLoginModal(false)}>
+          <div style={modal} onClick={(e) => e.stopPropagation()}>
+            <h3>Login required</h3>
+            <p>Bitte logge dich ein, um ein Ticket zu kaufen.</p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                style={{ ...button, backgroundColor: "#ccc", color: "#000" }}
+                onClick={() => setShowLoginModal(false)}
+              >
+                Abbrechen
+              </button>
+              <button
+                style={button}
+                onClick={() => {
+                  setShowLoginModal(false);
+                  // navigate to sign-in; you may keep pendingTicket to resume purchase after login
+                  navigate("/signIn");
+                }}
+              >
+                Zum Login
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -161,6 +191,28 @@ const button: React.CSSProperties = {
   backgroundColor: "#6E5B3A",
   color: "#fff",
   cursor: "pointer"
+};
+
+const modalOverlay: React.CSSProperties = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0,0,0,0.5)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 9999,
+};
+
+const modal: React.CSSProperties = {
+  backgroundColor: "#fff",
+  padding: "20px",
+  borderRadius: "8px",
+  width: "90%",
+  maxWidth: "400px",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
 };
 
 export default TicketBuyPage;
