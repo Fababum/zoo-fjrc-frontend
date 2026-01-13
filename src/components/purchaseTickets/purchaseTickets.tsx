@@ -5,7 +5,6 @@ import { useAuth } from "@/components/AuthContext";
 function TicketBuyPage() {
   const auth = useAuth();
   const navigate = useNavigate();
-  const [loadingTicket, setLoadingTicket] = useState<string | null>(null);
   const [showQtyModal, setShowQtyModal] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
@@ -16,7 +15,7 @@ function TicketBuyPage() {
   const parsePrice = (priceStr: string) => {
     // parse strings like "CHF 32.-" to number 32
     const m = priceStr.match(/\d+(?:[.,]\d+)?/);
-    return m ? Number(m[0].replace(',', '.')) : 0;
+    return m ? Number(m[0].replace(",", ".")) : 0;
   };
 
   const handleBuy = (ticketTitle: string) => {
@@ -81,7 +80,7 @@ function TicketBuyPage() {
       {showQtyModal && selectedTicket && (
         <div style={modalOverlay} onClick={() => setShowQtyModal(false)}>
           <div style={modal} onClick={(e) => e.stopPropagation()}>
-            <h3>Anzahl wählen</h3>
+            <h3>Anzahl waehlen</h3>
             <p>{selectedTicket}</p>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <button onClick={() => setQty((q) => Math.max(1, q - 1))}>-</button>
@@ -99,7 +98,7 @@ function TicketBuyPage() {
       {/* Cart button */}
       <div style={cartButtonWrap}>
         <button style={cartButton} onClick={() => setShowCart((s) => !s)}>
-          🛒 {cartCount}
+          Cart ({cartCount})
         </button>
         {showCart && (
           <div style={cartPane} onClick={(e) => e.stopPropagation()}>
@@ -168,12 +167,12 @@ const tickets = [
   },
   {
     title: "Jugendliche",
-    desc: "13–17 Jahre",
+    desc: "13-17 Jahre",
     price: "CHF 26.-"
   },
   {
     title: "Kinder",
-    desc: "6–12 Jahre",
+    desc: "6-12 Jahre",
     price: "CHF 17.-"
   }
 ];
