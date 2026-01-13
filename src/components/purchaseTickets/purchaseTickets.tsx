@@ -34,32 +34,6 @@ function TicketBuyPage() {
       const existing = cur.find((c) => c.title === title);
       if (existing) {
         return cur.map((c) => (c.title === title ? { ...c, qty: c.qty + quantity } : c));
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [pendingTicket, setPendingTicket] = useState<string | null>(null);
-
-  const handleBuy = async (ticketTitle: string) => {
-    if (!auth.isLoggedIn) {
-      setPendingTicket(ticketTitle);
-      setShowLoginModal(true);
-      return;
-    }
-
-    setLoadingTicket(ticketTitle);
-    try {
-      const res = await fetch("/api/buy-ticket", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(auth.token ? { Authorization: `Bearer ${auth.token}` } : {}),
-        },
-        body: JSON.stringify({ ticket: ticketTitle }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        alert("Purchase failed: " + text);
-      } else {
-        alert("Ticket purchased: " + ticketTitle);
       }
       return [...cur, { title, price, qty: quantity }];
     });
@@ -168,28 +142,6 @@ function TicketBuyPage() {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
               <button style={{ ...button, backgroundColor: '#ccc', color: '#000' }} onClick={() => setShowLoginNeeded(false)}>Abbrechen</button>
               <button style={button} onClick={() => navigate('/signIn', { state: { from: '/purchase-card', cart, total: cartTotal } })}>Zum Login</button>
-      {showLoginModal && (
-        <div style={modalOverlay} onClick={() => setShowLoginModal(false)}>
-          <div style={modal} onClick={(e) => e.stopPropagation()}>
-            <h3>Login required</h3>
-            <p>Bitte logge dich ein, um ein Ticket zu kaufen.</p>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button
-                style={{ ...button, backgroundColor: "#ccc", color: "#000" }}
-                onClick={() => setShowLoginModal(false)}
-              >
-                Abbrechen
-              </button>
-              <button
-                style={button}
-                onClick={() => {
-                  setShowLoginModal(false);
-                  // navigate to sign-in; you may keep pendingTicket to resume purchase after login
-                  navigate("/signIn");
-                }}
-              >
-                Zum Login
-              </button>
             </div>
           </div>
         </div>
@@ -198,7 +150,6 @@ function TicketBuyPage() {
   );
 }
 
-      
 
 const tickets = [
   {
