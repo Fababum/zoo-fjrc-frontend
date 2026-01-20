@@ -31,6 +31,9 @@ export const getPaymentMethods = async (
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error("UNAUTHORIZED");
+    }
     throw new Error("Zahlungsmethoden konnten nicht geladen werden");
   }
 
@@ -51,6 +54,9 @@ export const createPaymentMethod = async (
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error("UNAUTHORIZED");
+    }
     throw new Error("Zahlungsmethode konnte nicht gespeichert werden");
   }
 
@@ -72,6 +78,9 @@ export const updatePaymentMethod = async (
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error("UNAUTHORIZED");
+    }
     throw new Error("Zahlungsmethode konnte nicht aktualisiert werden");
   }
 
@@ -90,6 +99,9 @@ export const deletePaymentMethod = async (
   });
 
   if (!response.ok) {
-    throw new Error("Zahlungsmethode konnte nicht gelÃ¶scht werden");
+    if (response.status === 401) {
+      throw new Error("UNAUTHORIZED");
+    }
+    throw new Error("Zahlungsmethode konnte nicht gelöscht werden");
   }
 };

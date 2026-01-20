@@ -16,6 +16,12 @@ import { ToastViewport, useToast } from "@/components/ui/toast";
 type CartItem = { title: string; price: number; qty: number };
 type SavedCard = PaymentMethod;
 
+type CardErrors = {
+  cardNumber?: string;
+  expiry?: string;
+  cvv?: string;
+};
+
 function PurchaseTicketsCardInfo() {
   const location = useLocation();
   const cart: CartItem[] = (location.state && (location.state as any).cart) || [];
@@ -23,11 +29,13 @@ function PurchaseTicketsCardInfo() {
 
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const [selectedCardId, setSelectedCardId] = useState("new");
+  const [showAuthNotice, setShowAuthNotice] = useState(false);
 
   const [cardType, setCardType] = useState("visa");
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
+  const [cardErrors, setCardErrors] = useState<CardErrors>({});
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -48,11 +56,21 @@ function PurchaseTicketsCardInfo() {
 
   useEffect(() => {
     const loadCards = async () => {
-      if (!auth.token) return;
+      if (!auth.token) {
+        setSavedCards([]);
+        setShowAuthNotice(true);
+        return;
+      }
       try {
         const data = await getPaymentMethods(auth.token);
         setSavedCards(data);
+        setShowAuthNotice(false);
       } catch (err) {
+        if (err instanceof Error && err.message === "UNAUTHORIZED") {
+          setSavedCards([]);
+          setShowAuthNotice(true);
+          return;
+        }
         console.error(err);
       }
     };
@@ -90,6 +108,7 @@ function PurchaseTicketsCardInfo() {
     setExpiry("");
     setCvv("");
     setCardType("visa");
+    setCardErrors({});
   }
   }, [selectedCardId, savedCards]);
 
@@ -133,6 +152,12 @@ function PurchaseTicketsCardInfo() {
     return isLang ? `/${segment}/orders` : "/orders";
   };
 
+  const resolveSignInPath = () => {
+    const segment = window.location.pathname.split("/")[1];
+    const isLang = ["de", "en", "fr", "it"].includes(segment);
+    return isLang ? `/${segment}/signIn` : "/signIn";
+  };
+
   const handleOrderSuccess = () => {
     pushToast("Tickets erfolgreich gekauft.", "success");
     window.setTimeout(() => {
@@ -140,16 +165,112 @@ function PurchaseTicketsCardInfo() {
     }, 600);
   };
 
+  const isLuhnValid = (value: string) => {
+    let sum = 0;
+    let shouldDouble = false;
+    for (let i = value.length - 1; i >= 0; i -= 1) {
+      let digit = Number(value[i]);
+      if (Number.isNaN(digit)) return false;
+      if (shouldDouble) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      shouldDouble = !shouldDouble;
+    }
+    return sum % 10 === 0;
+  };
+
+  const validateCardFields = (
+    values: { cardNumber: string; expiry: string; cvv: string },
+    requireAll: boolean
+  ): CardErrors => {
+    const errors: CardErrors = {};
+    const cleanedNumber = values.cardNumber.replace(/\s+/g, "");
+
+    if (requireAll || cleanedNumber) {
+      if (!cleanedNumber) {
+        errors.cardNumber = "Bitte geben Sie eine Kartennummer ein";
+      } else if (!/^\d{13,19}$/.test(cleanedNumber) || !isLuhnValid(cleanedNumber)) {
+        errors.cardNumber = "Bitte geben Sie eine gueltige Kartennummer ein";
+      }
+    }
+
+    if (requireAll || values.expiry) {
+      if (!values.expiry) {
+        errors.expiry = "Bitte geben Sie ein Ablaufdatum ein";
+      } else {
+        const [expYear, expMonth] = values.expiry.split("-").map((value) => Number(value));
+        if (!expYear || !expMonth || expMonth < 1 || expMonth > 12) {
+          errors.expiry = "Bitte geben Sie ein gueltiges Ablaufdatum ein";
+        } else {
+          const now = new Date();
+          const currentYear = now.getFullYear();
+          const currentMonth = now.getMonth() + 1;
+          if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
+            errors.expiry = "Diese Karte ist abgelaufen";
+          }
+        }
+      }
+    }
+
+    if (requireAll || values.cvv) {
+      if (!values.cvv) {
+        errors.cvv = "Bitte geben Sie einen CVV/CVC ein";
+      } else if (!/^\d{3,4}$/.test(values.cvv)) {
+        errors.cvv = "Bitte geben Sie einen gueltigen CVV/CVC ein";
+      }
+    }
+
+    return errors;
+  };
+
+  const formatCardNumber = (value: string) => {
+    const digits = value.replace(/\D+/g, "").slice(0, 19);
+    return digits.replace(/(.{4})/g, "$1 ").trim();
+  };
+
+  const handleCardNumberChange = (value: string) => {
+    const formatted = formatCardNumber(value);
+    setCardNumber(formatted);
+    if (selectedCardId === "new") {
+      const nextErrors = validateCardFields({ cardNumber: formatted, expiry, cvv }, false);
+      setCardErrors((prev) => ({ ...prev, cardNumber: nextErrors.cardNumber }));
+    }
+  };
+
+  const handleExpiryChange = (value: string) => {
+    setExpiry(value);
+    if (selectedCardId === "new") {
+      const nextErrors = validateCardFields({ cardNumber, expiry: value, cvv }, false);
+      setCardErrors((prev) => ({ ...prev, expiry: nextErrors.expiry }));
+    }
+  };
+
+  const handleCvvChange = (value: string) => {
+    const digits = value.replace(/\D+/g, "").slice(0, 4);
+    setCvv(digits);
+    if (selectedCardId === "new") {
+      const nextErrors = validateCardFields({ cardNumber, expiry, cvv: digits }, false);
+      setCardErrors((prev) => ({ ...prev, cvv: nextErrors.cvv }));
+    }
+  };
+
   const handlePay = () => {
-    if (!cardNumber && selectedCardId === "new") {
-      return alert("Bitte geben Sie eine Kartennummer ein");
-    }
     if (!firstName || !lastName || !street || !houseNumber || !postalCode || !city) {
-      return alert("Bitte füllen Sie alle Pflichtfelder aus");
+      return alert("Bitte f?llen Sie alle Pflichtfelder aus");
     }
-    
+
+    if (selectedCardId === "new") {
+      const errors = validateCardFields({ cardNumber, expiry, cvv }, true);
+      setCardErrors(errors);
+      if (Object.keys(errors).length > 0) {
+        return;
+      }
+    }
+
     console.log("Zahlung wird verarbeitet...");
-    
+
     if (selectedCardId === "new" && cardNumber && expiry && cvv) {
       setShowSaveModal(true);
     } else {
@@ -157,7 +278,6 @@ function PurchaseTicketsCardInfo() {
       handleOrderSuccess();
     }
   };
-
   const handleSaveCard = async () => {
     if (!auth.token) return;
 
@@ -169,7 +289,7 @@ function PurchaseTicketsCardInfo() {
       const created = await createPaymentMethod(
         {
           cardType,
-          last4: cardNumber.slice(-4),
+          last4: cardNumber.replace(/\s+/g, "").slice(-4),
           expMonth,
           expYear,
           firstName,
@@ -189,6 +309,10 @@ function PurchaseTicketsCardInfo() {
       void persistOrder();
       handleOrderSuccess();
     } catch (err) {
+      if (err instanceof Error && err.message === "UNAUTHORIZED") {
+        setShowAuthNotice(true);
+        return;
+      }
       console.error(err);
       alert("Speichern der Karte fehlgeschlagen");
     }
@@ -205,6 +329,10 @@ function PurchaseTicketsCardInfo() {
           setSelectedCardId("new");
         }
       } catch (err) {
+        if (err instanceof Error && err.message === "UNAUTHORIZED") {
+          setShowAuthNotice(true);
+          return;
+        }
         console.error(err);
         alert("Löschen der Karte fehlgeschlagen");
       }
@@ -260,6 +388,10 @@ function PurchaseTicketsCardInfo() {
         setPhone(updated.phone);
       }
     } catch (err) {
+      if (err instanceof Error && err.message === "UNAUTHORIZED") {
+        setShowAuthNotice(true);
+        return;
+      }
       console.error(err);
       alert("Speichern der Änderungen fehlgeschlagen");
     }
@@ -309,6 +441,21 @@ function PurchaseTicketsCardInfo() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Zahlungsmethode
               </label>
+              {showAuthNotice && (
+                <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  <div className="font-semibold">Bitte anmelden</div>
+                  <p className="mt-1">
+                    Melden Sie sich an, um gespeicherte Zahlungsmethoden zu sehen und zu speichern.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate(resolveSignInPath())}
+                    className="mt-3 inline-flex items-center rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100 transition-all"
+                  >
+                    Zum Login
+                  </button>
+                </div>
+              )}
               <select 
                 className="w-full h-12 px-4 bg-white border-2 border-gray-200 rounded-xl text-base focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all"
                 value={selectedCardId} 
@@ -394,9 +541,14 @@ function PurchaseTicketsCardInfo() {
                       className="w-full h-12 px-4 bg-white border-2 border-gray-200 rounded-lg focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all"
                       placeholder="1234 5678 9012 3456" 
                       value={cardNumber} 
-                      onChange={e=>setCardNumber(e.target.value)}
-                      maxLength={16}
+                      onChange={e=>handleCardNumberChange(e.target.value)}
+                      maxLength={23}
+                      inputMode="numeric"
+                      autoComplete="cc-number"
                     />
+                    {cardErrors.cardNumber && (
+                      <p className="text-xs text-red-600 mt-1">{cardErrors.cardNumber}</p>
+                    )}
                   </div>
 
                   <div>
@@ -407,8 +559,12 @@ function PurchaseTicketsCardInfo() {
                       type="month"
                       className="w-full h-12 px-4 bg-white border-2 border-gray-200 rounded-lg focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all"
                       value={expiry} 
-                      onChange={e=>setExpiry(e.target.value)}
+                      onChange={e=>handleExpiryChange(e.target.value)}
+                      autoComplete="cc-exp"
                     />
+                    {cardErrors.expiry && (
+                      <p className="text-xs text-red-600 mt-1">{cardErrors.expiry}</p>
+                    )}
                   </div>
 
                   <div>
@@ -419,10 +575,15 @@ function PurchaseTicketsCardInfo() {
                       className="w-full h-12 px-4 bg-white border-2 border-gray-200 rounded-lg focus:border-gray-600 focus:ring-2 focus:ring-gray-200 transition-all"
                       placeholder="123" 
                       value={cvv} 
-                      onChange={e=>setCvv(e.target.value)}
+                      onChange={e=>handleCvvChange(e.target.value)}
                       maxLength={4}
                       type="password"
+                      inputMode="numeric"
+                      autoComplete="cc-csc"
                     />
+                    {cardErrors.cvv && (
+                      <p className="text-xs text-red-600 mt-1">{cardErrors.cvv}</p>
+                    )}
                   </div>
                 </div>
               </div>
