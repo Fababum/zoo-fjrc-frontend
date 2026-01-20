@@ -2,9 +2,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../ui/card";
 import { Button } from "../ui/button";
 import LoadArticle from "./loadArticle";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { getAllArtikel, createArtikel } from "../../api/artikel";
 import { Plus, X } from "lucide-react";
+import { TranslationsContext } from "../TranslationsContext";
 
 interface Article {
   id: string;
@@ -15,6 +16,13 @@ interface Article {
 }
 
 function ArticleOverview() {
+  const context = useContext(TranslationsContext);
+  if (!context) return null;
+
+  const { translations, lang } = context;
+  const t = translations.articlesPage;
+  const langKey = lang as keyof typeof t.title;
+
   const navigate = useNavigate();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +52,7 @@ function ArticleOverview() {
         setError(null);
       } catch (err) {
         console.error('Error fetching articles:', err);
-        setError('Fehler beim Laden der Artikel.');
+        setError(t.errorLoading[langKey]);
         setArticles([]);
       } finally {
         setLoading(false);
@@ -57,7 +65,7 @@ function ArticleOverview() {
   // Helper functions to extract metadata from markdown
   const extractTitle = (markdown: string): string => {
     const titleMatch = markdown.match(/^#\s+(.+)$/m);
-    return titleMatch ? titleMatch[1] : 'Unbekannter Artikel';
+    return titleMatch ? titleMatch[1] : t.unknownArticleTitle[langKey];
   };
 
   const extractDescription = (markdown: string): string => {
@@ -126,7 +134,7 @@ function ArticleOverview() {
       setMarkdownInput('');
     } catch (err) {
       console.error('Error creating article:', err);
-      setError('Fehler beim Erstellen des Artikels.');
+      setError(t.errorCreating[langKey]);
     } finally {
       setCreating(false);
     }
@@ -137,7 +145,7 @@ function ArticleOverview() {
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-white py-12 px-4 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 mx-auto"></div>
-          <p className="mt-4 text-slate-600">Artikel werden geladen...</p>
+          <p className="mt-4 text-slate-600">{t.loading[langKey]}</p>
         </div>
       </div>
     );
@@ -156,18 +164,20 @@ function ArticleOverview() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <div className="flex flex-col items-center justify-center gap-4 mb-6 sm:flex-row">
-            <h1 className="text-4xl font-semibold text-slate-900">Tier-Artikel</h1>
+            <h1 className="text-4xl font-semibold text-slate-900">
+              {t.title[langKey]}
+            </h1>
             <Button
               onClick={() => setShowCreateModal(true)}
               className="gap-2 rounded-full"
               size="lg"
             >
               <Plus className="h-5 w-5" />
-              Neuer Artikel
+              {t.createButton[langKey]}
             </Button>
           </div>
           <p className="text-base text-slate-600">
-            Entdecke faszinierende Geschichten und Fakten über verschiedene Tierarten
+            {t.subtitle[langKey]}
           </p>
           {error && (
             <p className="text-sm text-amber-600 mt-2">
@@ -217,7 +227,7 @@ function ArticleOverview() {
                     handleArticleClick(article.id);
                   }}
                 >
-                  Mehr lesen →
+                  {t.readMore[langKey]}
                 </Button>
               </CardFooter>
             </Card>
@@ -239,15 +249,17 @@ function ArticleOverview() {
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-amber-100/70">
             <div className="flex items-start justify-between gap-4 p-6 border-b border-amber-100/70 sticky top-0 bg-white/90 backdrop-blur">
               <div>
-                <h2 className="text-2xl font-semibold text-slate-900">Neuer Artikel</h2>
+                <h2 className="text-2xl font-semibold text-slate-900">
+                  {t.modalTitle[langKey]}
+                </h2>
                 <p className="text-sm text-slate-600 mt-1">
-                  Füge Titel, Text und optional ein Bild hinzu.
+                  {t.modalSubtitle[langKey]}
                 </p>
               </div>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="text-slate-500 hover:text-slate-700"
-                aria-label="Modal schließen"
+                aria-label={t.closeAria[langKey]}
               >
                 <X className="h-6 w-6" />
               </button>
@@ -256,19 +268,20 @@ function ArticleOverview() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Inhalt (Markdown)
+                  {t.contentLabel[langKey]}
                 </label>
                 <textarea
                   value={markdownInput}
                   onChange={(e) => setMarkdownInput(e.target.value)}
-                  placeholder={
-                    "# Titel des Artikels\n\nKurze Einleitung...\n\n![Bildbeschreibung](https://...)\n\n## Abschnitt\nText..."
-                  }
+                  placeholder={t.contentPlaceholder[langKey]}
                   className="w-full h-64 p-4 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-200 font-mono text-sm shadow-sm"
                 />
                 <div className="mt-2 text-xs text-slate-500">
-                  Tipp: Starte mit <span className="font-semibold"># Titel</span>. Bilder:{" "}
-                  <span className="font-semibold">![Bild](url)</span>. Maximal 2-3 kurze Abschnitte.
+                  {t.tipPrefix[langKey]}{" "}
+                  <span className="font-semibold">{t.tipTitleToken[langKey]}</span>.{" "}
+                  {t.tipMiddle[langKey]}{" "}
+                  <span className="font-semibold">{t.tipImageToken[langKey]}</span>.{" "}
+                  {t.tipSuffix[langKey]}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button
@@ -279,11 +292,11 @@ function ArticleOverview() {
                       setMarkdownInput(
                         (prev) =>
                           prev ||
-                          "# Titel des Artikels\n\nKurze Einleitung...\n\n## Abschnitt\nText...\n"
+                          t.defaultTemplate[langKey]
                       )
                     }
                   >
-                    Vorlage einfügen
+                    {t.insertTemplate[langKey]}
                   </Button>
                   <Button
                     type="button"
@@ -291,11 +304,11 @@ function ArticleOverview() {
                     className="rounded-full"
                     onClick={() =>
                       setMarkdownInput((prev) =>
-                        `${prev}\n\n![Bildbeschreibung](https://...)`
+                        `${prev}\n\n${t.imagePlaceholderSnippet[langKey]}`
                       )
                     }
                   >
-                    Bild-Platzhalter
+                    {t.insertImagePlaceholder[langKey]}
                   </Button>
                 </div>
               </div>
@@ -306,14 +319,14 @@ function ArticleOverview() {
                   onClick={() => setShowCreateModal(false)}
                   className="rounded-full"
                 >
-                  Abbrechen
+                  {t.cancel[langKey]}
                 </Button>
                 <Button
                   onClick={handleCreateArticle}
                   disabled={creating || !markdownInput.trim()}
                   className="rounded-full"
                 >
-                  {creating ? 'Erstelle...' : 'Artikel erstellen'}
+                  {creating ? t.creating[langKey] : t.createArticle[langKey]}
                 </Button>
               </div>
             </div>

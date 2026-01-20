@@ -54,8 +54,8 @@ function SignIn() {
       if (!response.ok) {
         const fallbackMessage =
           response.status === 401 || response.status === 403
-            ? "Invalid credentials."
-            : "Login failed. Please try again.";
+            ? t.toastInvalidCredentials[langKey]
+            : t.toastLoginFailed[langKey];
         pushToast(data?.message ?? fallbackMessage, "error");
         return;
       }
@@ -67,17 +67,17 @@ function SignIn() {
         data?.data?.token ??
         null;
       if (!token) {
-        pushToast("Login succeeded but no token was returned.", "error");
+        pushToast(t.toastNoToken[langKey], "error");
         return;
       }
 
       auth.login(token, data?.user ?? null);
-      pushToast("Login erfolgreich.", "success");
+      pushToast(t.toastSuccess[langKey], "success");
       window.setTimeout(() => {
         navigate("/");
       }, 600);
     } catch (err) {
-      pushToast("Login failed. Please check your connection.", "error");
+      pushToast(t.toastConnectionError[langKey], "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -134,7 +134,7 @@ function SignIn() {
               className="w-full rounded-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Logging in..." : t.loginButton[langKey]}
+              {isSubmitting ? t.loggingIn[langKey] : t.loginButton[langKey]}
             </Button>
 
             <Button

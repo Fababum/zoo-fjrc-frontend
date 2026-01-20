@@ -61,7 +61,7 @@ function SignUp() {
 
       if (!response.ok) {
         pushToast(
-          data?.message ?? "Registration failed. Please try again.",
+          data?.message ?? t.toastRegistrationFailed[langKey],
           "error"
         );
         return;
@@ -78,12 +78,12 @@ function SignUp() {
         auth.login(token, data?.user ?? null);
       }
 
-      pushToast("Account erstellt.", "success");
+      pushToast(t.toastSuccess[langKey], "success");
       window.setTimeout(() => {
         navigate("/signUpConfirmation");
       }, 600);
     } catch (err) {
-      pushToast("Registration failed. Please check your connection.", "error");
+      pushToast(t.toastConnectionError[langKey], "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -110,11 +110,11 @@ function SignUp() {
         <form onSubmit={handleSignUp}>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="name">{t.name?.[langKey] ?? "Name"}</Label>
+              <Label htmlFor="name">{t.name[langKey]}</Label>
               <Input
                 id="name"
                 type="text"
-                placeholder={t.namePlaceholder?.[langKey] ?? "John Doe"}
+                placeholder={t.namePlaceholder[langKey]}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -144,12 +144,12 @@ function SignUp() {
 
             <div>
               <Label htmlFor="confirmPassword">
-                {t.confirmPassword?.[langKey] ?? "Confirm password"}
+                {t.confirmPassword[langKey]}
               </Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder={t.confirmPassword?.[langKey] ?? "Confirm password"}
+                placeholder={t.confirmPassword[langKey]}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
@@ -162,7 +162,7 @@ function SignUp() {
               className="w-full rounded-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Creating account..." : t.createAccount[langKey]}
+              {isSubmitting ? t.creatingAccount[langKey] : t.createAccount[langKey]}
             </Button>
 
             <Button
